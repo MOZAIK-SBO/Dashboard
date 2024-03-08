@@ -1,2 +1,11 @@
-<h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation</p>
+<script lang="ts">
+	import { page } from '$app/stores';
+</script>
+
+<p>
+	{#if $page.data.session?.user}
+		<p>
+			Welcome {$page.data.session.user.email} expires {$page.data.session.expires}
+		</p>
+	{/if}
+</p>
