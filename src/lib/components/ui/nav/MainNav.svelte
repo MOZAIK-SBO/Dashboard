@@ -8,7 +8,7 @@
 	$: userClientAvailable = $userClientStore.client_jwt_token != null;
 </script>
 
-<nav class="mx-6 w-full flex justify-between">
+<nav class="w-full flex justify-between">
 	<div class="flex items-center space-x-4 lg:space-x-6">
 		<NavLink linkName="Home" href="{base}/" disabled={false} />
 

@@ -2,7 +2,7 @@ import { localStorageStore } from '$lib/util/LocalStorageStore';
 import { setContext, getContext } from 'svelte';
 import type { Writable } from 'svelte/store';
 
-interface UserClientData {
+export interface UserClientData {
 	client_id: string;
 	client_secret: string;
 	iot_dataset: string;
