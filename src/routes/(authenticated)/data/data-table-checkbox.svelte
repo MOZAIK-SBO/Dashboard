@@ -3,7 +3,7 @@
 	import type { Writable } from 'svelte/store';
 
 	export let checked: Writable<boolean>;
-	export let timestamp: number;
+	export let enabled: boolean;
 </script>
 
-<Checkbox bind:checked={$checked} />
+<Checkbox bind:checked={$checked} disabled={!enabled} />

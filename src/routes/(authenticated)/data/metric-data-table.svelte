@@ -31,16 +31,7 @@
 		table.column({
 			accessor: 'timestamp',
 			id: 'select-timestamp',
-			header: '',
-			cell: ({ row, value }, { pluginStates }) => {
-				const { getRowState } = pluginStates.select;
-				const { isSelected } = getRowState(row);
-
-				return createRender(DataTableCheckbox, {
-					checked: isSelected,
-					timestamp: value
-				});
-			}
+			header: ''
 		}),
 		table.column({
 			accessor: 'timestamp',
@@ -79,8 +70,10 @@
 		table.createViewModel(columns);
 
 	const { hasNextPage, hasPreviousPage, pageIndex, pageSize } = pluginStates.page;
-	// const { selectedDataIds,  } = pluginStates.select;
-	// $: console.log($allRowsSelected);
+	const { selectedDataIds, someRowsSelected, getRowState } = pluginStates.select;
+
+	$: smallestSelectedId = Math.min(...Object.keys($selectedDataIds).map(Number));
+	$: largestSelectedId = Math.max(...Object.keys($selectedDataIds).map(Number));
 </script>
 
 <div class="w-[90%]">
@@ -115,7 +108,16 @@
 							{#each row.cells as cell (cell.id)}
 								<Subscribe attrs={cell.attrs()} let:attrs>
 									<Table.Cell {...attrs}>
-										{#if cell.id === 'encrypted-data'}
+										{#if cell.id === 'select-timestamp'}
+											<DataTableCheckbox
+												checked={getRowState(row).isSelected}
+												enabled={$someRowsSelected === false ||
+													+row.id === smallestSelectedId ||
+													+row.id === largestSelectedId ||
+													+row.id === largestSelectedId + 1 ||
+													+row.id === smallestSelectedId - 1}
+											/>
+										{:else if cell.id === 'encrypted-data'}
 											<Badge variant="outline">************</Badge>
 										{:else}
 											<Render of={cell.render()} />
