@@ -14,6 +14,7 @@
 	interface UserClientForm {
 		client_id: string;
 		client_secret: string;
+		user_public_key: string;
 		iot_dataset: string;
 		result_dataset: string;
 	}
@@ -21,6 +22,7 @@
 	const userClientFormData: UserClientForm = {
 		client_id: $userClientStore.client_id,
 		client_secret: $userClientStore.client_secret,
+		user_public_key: $userClientStore.user_public_key,
 		iot_dataset: $userClientStore.iot_dataset,
 		result_dataset: $userClientStore.result_dataset
 	};
@@ -35,6 +37,7 @@
 		$userClientStore = {
 			client_id: '',
 			client_secret: '',
+			user_public_key: '',
 			iot_dataset: '',
 			result_dataset: '',
 			client_jwt_token: null,
@@ -75,6 +78,16 @@
 							placeholder="Client secret"
 							required
 							bind:value={userClientFormData.client_secret}
+						/>
+					</div>
+					<div class="flex flex-col space-y-2">
+						<Label for="user_public_key">User public key (base64)</Label>
+						<Input
+							id="user_public_key"
+							name="user_public_key"
+							placeholder="Public key (base64)"
+							required
+							bind:value={userClientFormData.user_public_key}
 						/>
 					</div>
 					<div class="flex flex-col space-y-2">
