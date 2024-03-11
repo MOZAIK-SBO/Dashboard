@@ -3,10 +3,8 @@
 	import * as Card from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import { getUserClientStore } from '$lib/stores/UserClientStore';
+	import { userClientStore } from '$lib/stores/UserClientStore';
 	import { userClientAuthentication } from '$lib/util/UserClientAuth';
-
-	const userClientStore = getUserClientStore();
 
 	let inputChanged = false;
 	$: saveBtnEnabled = $userClientStore.client_jwt_token == null || inputChanged ? true : false;
@@ -28,7 +26,7 @@
 	};
 
 	function handleUserClientFormSubmit() {
-		userClientAuthentication(userClientFormData, userClientStore).then(() => {
+		userClientAuthentication(userClientFormData).then(() => {
 			inputChanged = false;
 		});
 	}

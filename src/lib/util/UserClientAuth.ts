@@ -1,13 +1,10 @@
 import { PUBLIC_KEYCLOAK_OBELISK } from '$env/static/public';
-import type { UserClientData } from '$lib/stores/UserClientStore';
+import { userClientStore } from '$lib/stores/UserClientStore';
 import { toast } from 'svelte-sonner';
-import { get, type Writable } from 'svelte/store';
+import { get } from 'svelte/store';
 
-export async function userClientAuthentication(
-	userClientFormData: any,
-	userClientStore: Writable<UserClientData>
-) {
-	fetch(`${PUBLIC_KEYCLOAK_OBELISK}`, {
+export async function userClientAuthentication(userClientFormData: any, firstAuth = true) {
+	await fetch(`${PUBLIC_KEYCLOAK_OBELISK}`, {
 		method: 'POST',
 		headers: {
 			Authorization: `Basic ${btoa(`${userClientFormData.client_id}:${userClientFormData.client_secret}`)}`,
@@ -25,9 +22,11 @@ export async function userClientAuthentication(
 					client_jwt_token_iat: Date.now()
 				});
 
-				toast.success('Authentication successful', {
-					description: 'You can now perform computations on your data.'
-				});
+				if (firstAuth) {
+					toast.success('Authentication successful', {
+						description: 'You can now perform computations on your data.'
+					});
+				}
 			} else {
 				userClientStore.update((u) => {
 					return {
@@ -55,12 +54,12 @@ export async function userClientAuthentication(
 		});
 }
 
-export async function getUserClientToken(userClientStore: Writable<UserClientData>) {
+export async function getUserClientToken() {
 	let userClientData = get(userClientStore);
 
 	if (
 		userClientData.client_jwt_token == null ||
-		Date.now() - userClientData.client_jwt_token_iat < 30000
+		Date.now() - userClientData.client_jwt_token_iat > 200000 // Elapsed time larger than 200 seconds (token is valid for 300 seconds)
 	) {
 		await userClientAuthentication(
 			{
@@ -69,11 +68,11 @@ export async function getUserClientToken(userClientStore: Writable<UserClientDat
 				iot_dataset: userClientData.iot_dataset,
 				result_dataset: userClientData.result_dataset
 			},
-			userClientStore
+			false
 		);
 
-		userClientData = get(userClientStore);
+		return get(userClientStore).client_jwt_token!;
+	} else {
+		return userClientData.client_jwt_token!;
 	}
-
-	return userClientData.client_jwt_token!;
 }

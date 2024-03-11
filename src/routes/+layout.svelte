@@ -2,10 +2,8 @@
 	import { ModeWatcher } from 'mode-watcher';
 	import '../app.pcss';
 	import SiteHeader from '$lib/components/ui/SiteHeader.svelte';
-	import { initUserClientStore } from '$lib/stores/UserClientStore';
 	import { Toaster } from '$lib/components/ui/sonner';
-
-	initUserClientStore();
+	import { navigating } from '$app/stores';
 </script>
 
 <ModeWatcher />
@@ -18,6 +16,10 @@
 <div class="relative flex min-h-screen flex-col bg-background">
 	<SiteHeader />
 	<div class="container flex-1">
-		<slot />
+		{#if $navigating}
+			Loading ...
+		{:else}
+			<slot />
+		{/if}
 	</div>
 </div>

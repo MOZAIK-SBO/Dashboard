@@ -1,10 +1,9 @@
 <script>
 	import { base } from '$app/paths';
-	import { getUserClientStore } from '$lib/stores/UserClientStore';
+	import { userClientStore } from '$lib/stores/UserClientStore';
 	import LightSwitch from '../LightSwitch.svelte';
 	import NavLink from './NavLink.svelte';
 
-	const userClientStore = getUserClientStore();
 	$: userClientAvailable = $userClientStore.client_jwt_token != null;
 </script>
 
