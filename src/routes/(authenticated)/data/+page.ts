@@ -7,7 +7,7 @@ import { userClientStore } from '$lib/stores/UserClientStore';
 export const ssr = false;
 
 export const load: PageLoad = async ({ fetch }) => {
-	const res = await fetch(`${PUBLIC_MOZAIK_API_ENDPOINT}/data/query`, {
+	const metricEventData = await fetch(`${PUBLIC_MOZAIK_API_ENDPOINT}/data/query`, {
 		method: 'POST',
 		headers: {
 			authorization: `Bearer ${await getUserClientToken()}`,
@@ -19,8 +19,21 @@ export const load: PageLoad = async ({ fetch }) => {
 			},
 			limit: 25000
 		})
-	});
+	})
+		.then((res) => res.json())
+		.then((metricEventData) => {
+			return metricEventData.items;
+		})
+		.catch((err) => {
+			console.error(err);
+			return [
+				{
+					timestamp: 0,
+					metric: 'error',
+					source: 'error'
+				}
+			];
+		});
 
-	const metricEventData = (await res.json()).items;
 	return { metricEventData };
 };
