@@ -94,7 +94,7 @@
 			</Table.Body>
 		</Table.Root>
 	</div>
-	<div class="flex justify-between items-center py-4">
+	<div class="flex justify-between items-center pt-4">
 		<p class="text-sm">
 			Showing <span class="font-bold"
 				>{$pageIndex * $pageSize + 1}-{($pageIndex + 1) * $pageSize <= dataLength
