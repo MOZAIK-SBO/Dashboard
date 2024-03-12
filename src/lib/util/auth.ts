@@ -29,5 +29,6 @@ export const {
 	],
 	theme: {
 		colorScheme: 'light'
-	}
+	},
+	trustHost: true
 });
