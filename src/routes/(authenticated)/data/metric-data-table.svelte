@@ -1,6 +1,6 @@
 <script lang="ts">
 	import * as Table from '$lib/components/ui/table';
-	import { createTable, Subscribe, Render, createRender, DataBodyRow } from 'svelte-headless-table';
+	import { createTable, Subscribe, Render } from 'svelte-headless-table';
 	import { addPagination, addSelectedRows, addSortBy } from 'svelte-headless-table/plugins';
 	import { readable } from 'svelte/store';
 	import { page } from '$app/stores';
@@ -9,6 +9,7 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { userClientStore } from '$lib/stores/UserClientStore';
 	import TableCheckbox from './table-checkbox.svelte';
+	import { selectedTimestamps } from './store';
 
 	// Types
 	type MetricEvent = {
@@ -43,6 +44,11 @@
 			}
 		}),
 		table.column({
+			accessor: 'timestamp',
+			id: 'raw-timestamp',
+			header: 'Raw Timestamp'
+		}),
+		table.column({
 			accessor: 'metric',
 			header: 'Metric',
 			plugins: {
@@ -72,8 +78,19 @@
 	const { hasNextPage, hasPreviousPage, pageIndex, pageSize } = pluginStates.page;
 	const { selectedDataIds, someRowsSelected, getRowState } = pluginStates.select;
 
-	$: smallestSelectedId = Math.min(...Object.keys($selectedDataIds).map(Number));
-	$: largestSelectedId = Math.max(...Object.keys($selectedDataIds).map(Number));
+	// Reactivity
+	let smallestSelectedId: number;
+	let largestSelectedId: number;
+
+	$: {
+		const selectedIdsArr = Object.keys($selectedDataIds).map(Number);
+
+		smallestSelectedId = Math.min(...selectedIdsArr);
+		largestSelectedId = Math.max(...selectedIdsArr);
+
+		// Store selected timestamps in shared store
+		$selectedTimestamps = selectedIdsArr.map((id) => metricEventData[id].timestamp);
+	}
 </script>
 
 <div class="w-[90%]">

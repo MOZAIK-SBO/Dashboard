@@ -6,6 +6,7 @@
 	import * as Table from '$lib/components/ui/table';
 	import { Button } from '$lib/components/ui/button';
 	import TableCheckbox from './table-checkbox.svelte';
+	import { selectedMpcParties } from './store';
 
 	// Types
 	type MpcParty = {
@@ -48,7 +49,12 @@
 	const { headerRows, pageRows, tableAttrs, tableBodyAttrs, pluginStates } =
 		table.createViewModel(columns);
 	const { hasNextPage, hasPreviousPage, pageIndex, pageSize } = pluginStates.page;
-	const { selectedDataIds, someRowsSelected, getRowState } = pluginStates.select;
+	const { selectedDataIds, getRowState } = pluginStates.select;
+
+	// Reactivity
+	$: $selectedMpcParties = Object.keys($selectedDataIds).map((key) => {
+		return mpcParties[+key].mpc_id;
+	});
 </script>
 
 <div class="w-[90%]">
