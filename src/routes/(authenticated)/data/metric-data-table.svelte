@@ -6,8 +6,9 @@
 	import { page } from '$app/stores';
 	import { Button } from '$lib/components/ui/button';
 	import { ArrowUpDown } from 'lucide-svelte';
-	import DataTableCheckbox from './data-table-checkbox.svelte';
 	import { Badge } from '$lib/components/ui/badge';
+	import { userClientStore } from '$lib/stores/UserClientStore';
+	import TableCheckbox from './table-checkbox.svelte';
 
 	// Types
 	type MetricEvent = {
@@ -68,7 +69,6 @@
 
 	const { headerRows, pageRows, tableAttrs, tableBodyAttrs, pluginStates } =
 		table.createViewModel(columns);
-
 	const { hasNextPage, hasPreviousPage, pageIndex, pageSize } = pluginStates.page;
 	const { selectedDataIds, someRowsSelected, getRowState } = pluginStates.select;
 
@@ -77,6 +77,12 @@
 </script>
 
 <div class="w-[90%]">
+	<div class="mb-2">
+		<p class="text-4xl font-bold tracking-tight">Encrypted Data</p>
+		<p class="text-lg text-muted-foreground">
+			Available in the <span class="font-bold">{$userClientStore.iot_dataset}</span> dataset.
+		</p>
+	</div>
 	<div class="rounded-md border w-full">
 		<Table.Root {...$tableAttrs}>
 			<Table.Header>
@@ -109,7 +115,7 @@
 								<Subscribe attrs={cell.attrs()} let:attrs>
 									<Table.Cell {...attrs}>
 										{#if cell.id === 'select-timestamp'}
-											<DataTableCheckbox
+											<TableCheckbox
 												checked={getRowState(row).isSelected}
 												enabled={$someRowsSelected === false ||
 													+row.id === smallestSelectedId ||
@@ -131,7 +137,7 @@
 			</Table.Body>
 		</Table.Root>
 	</div>
-	<div class="flex justify-between items-center py-4">
+	<div class="flex justify-between items-center pt-4">
 		<p class="text-sm">
 			Showing <span class="font-bold"
 				>{$pageIndex * $pageSize + 1}-{($pageIndex + 1) * $pageSize <= dataLength

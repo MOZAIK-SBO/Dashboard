@@ -26,14 +26,23 @@ export const load: PageLoad = async ({ fetch }) => {
 		})
 		.catch((err) => {
 			console.error(err);
-			return [
-				{
-					timestamp: 0,
-					metric: 'error',
-					source: 'error'
-				}
-			];
+			return [];
 		});
 
-	return { metricEventData };
+	const mpcParties = await fetch(`${PUBLIC_MOZAIK_API_ENDPOINT}/mpc/parties`, {
+		method: 'GET',
+		headers: {
+			authorization: `Bearer ${await getUserClientToken()}`
+		}
+	})
+		.then((res) => res.json())
+		.then((mpcParties) => {
+			return mpcParties;
+		})
+		.catch((err) => {
+			console.error(err);
+			return [];
+		});
+
+	return { metricEventData, mpcParties };
 };
