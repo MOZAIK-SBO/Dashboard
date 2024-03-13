@@ -5,6 +5,7 @@ export interface UserClientData {
 	client_id: string;
 	client_secret: string;
 	user_public_key: string;
+	iot_key: number[];
 	iot_dataset: string;
 	result_dataset: string;
 	client_jwt_token: string | null;
@@ -15,6 +16,7 @@ export const userClientStore: Writable<UserClientData> = localStorageStore('user
 	client_id: '',
 	client_secret: '',
 	user_public_key: '',
+	iot_key: [],
 	iot_dataset: '',
 	result_dataset: '',
 	client_jwt_token: null,

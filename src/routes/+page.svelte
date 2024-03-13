@@ -5,6 +5,7 @@
 	import { Label } from '$lib/components/ui/label';
 	import { userClientStore } from '$lib/stores/UserClientStore';
 	import { userClientAuthentication } from '$lib/util/UserClientAuth';
+	import { toast } from 'svelte-sonner';
 
 	let inputChanged = false;
 	$: saveBtnEnabled = $userClientStore.client_jwt_token == null || inputChanged ? true : false;
@@ -13,6 +14,7 @@
 		client_id: string;
 		client_secret: string;
 		user_public_key: string;
+		iot_key: number[];
 		iot_dataset: string;
 		result_dataset: string;
 	}
@@ -21,11 +23,32 @@
 		client_id: $userClientStore.client_id,
 		client_secret: $userClientStore.client_secret,
 		user_public_key: $userClientStore.user_public_key,
+		iot_key: $userClientStore.iot_key,
 		iot_dataset: $userClientStore.iot_dataset,
 		result_dataset: $userClientStore.result_dataset
 	};
 
+	// Convert number[] to a hex string
+	let iot_key_string = $userClientStore.iot_key.reduce(
+		(acc, byte) => acc + byte.toString(16).padStart(2, '0'),
+		''
+	);
+
+	// Reactive function to convert the hex string to number[]
+	$: {
+		userClientFormData.iot_key =
+			iot_key_string.match(/.{1,2}/g)?.map((byteStr) => Number(`0x${byteStr}`)) ?? [];
+	}
+
 	function handleUserClientFormSubmit() {
+		if (iot_key_string.length !== 32 || userClientFormData.iot_key.length !== 16) {
+			toast.error('IoT key format error', {
+				description:
+					'IoT key must be 32 characters (16 bytes) long without whitespace. Please provide a valid IoT key.'
+			});
+			return;
+		}
+
 		userClientAuthentication(userClientFormData).then(() => {
 			inputChanged = false;
 		});
@@ -36,6 +59,7 @@
 			client_id: '',
 			client_secret: '',
 			user_public_key: '',
+			iot_key: [],
 			iot_dataset: '',
 			result_dataset: '',
 			client_jwt_token: null,
@@ -86,6 +110,17 @@
 							placeholder="Public key (base64)"
 							required
 							bind:value={userClientFormData.user_public_key}
+						/>
+					</div>
+					<div class="flex flex-col space-y-2">
+						<Label for="iot_key">IoT key</Label>
+						<Input
+							id="iot_key"
+							name="iot_key"
+							type="password"
+							placeholder="IoT key (hex encoded bytes, concatenated in single string)"
+							required
+							bind:value={iot_key_string}
 						/>
 					</div>
 					<div class="flex flex-col space-y-2">

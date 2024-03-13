@@ -63,11 +63,7 @@ export async function getUserClientToken() {
 	) {
 		await userClientAuthentication(
 			{
-				client_id: userClientData.client_id,
-				client_secret: userClientData.client_secret,
-				user_public_key: userClientData.user_public_key,
-				iot_dataset: userClientData.iot_dataset,
-				result_dataset: userClientData.result_dataset
+				...userClientData
 			},
 			false
 		);
