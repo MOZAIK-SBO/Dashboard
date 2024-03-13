@@ -3,6 +3,7 @@ import type { PageLoad } from './$types';
 import { getUserClientToken } from '$lib/util/UserClientAuth';
 import { PUBLIC_MOZAIK_API_ENDPOINT } from '$env/static/public';
 import { userClientStore } from '$lib/stores/UserClientStore';
+import { toast } from 'svelte-sonner';
 
 export const ssr = false;
 
@@ -25,6 +26,9 @@ export const load: PageLoad = async ({ fetch }) => {
 			return metricEventData.items;
 		})
 		.catch((err) => {
+			toast.error(`Error: ${err.toString()}`, {
+				description: 'Check the developer console for more details.'
+			});
 			console.error(err);
 			return [];
 		});
@@ -40,6 +44,9 @@ export const load: PageLoad = async ({ fetch }) => {
 			return mpcParties;
 		})
 		.catch((err) => {
+			toast.error(`Error: ${err.toString()}`, {
+				description: 'Check the developer console for more details.'
+			});
 			console.error(err);
 			return [];
 		});
