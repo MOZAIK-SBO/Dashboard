@@ -6,15 +6,7 @@
 	import * as Table from '$lib/components/ui/table';
 	import { Button } from '$lib/components/ui/button';
 	import TableCheckbox from './table-checkbox.svelte';
-	import { selectedMpcParties } from './store';
-
-	// Types
-	type MpcParty = {
-		mpc_id: string;
-		host: string;
-		mpc_key: string;
-		region: string;
-	};
+	import { selectedMpcParties, type MpcParty } from './store';
 
 	// Data
 	const mpcParties: MpcParty[] = $page.data.mpcParties;
@@ -53,7 +45,7 @@
 
 	// Reactivity
 	$: $selectedMpcParties = Object.keys($selectedDataIds).map((key) => {
-		return mpcParties[+key].mpc_id;
+		return mpcParties[+key];
 	});
 </script>
 
