@@ -67,10 +67,10 @@ async function createUserIdAndPubkeyContext(
  * @param {CryptoKey} party2Pubkey
  * @param {CryptoKey} party3Pubkey
  * @param {string} analysisType
- * @param {number[]} dataIndices array of timestamps in second precision
+ * @param {number[]} dataIndices array of timestamps in millisecond precision
  * @returns {Promise<ArrayBuffer[]>}
  */
-export async function createAnalysisRequestData(
+export async function createEncryptedKeyShares(
 	userId,
 	iotDeviceKey,
 	algorithm,
@@ -90,14 +90,13 @@ export async function createAnalysisRequestData(
 		party3Pubkey
 	);
 	const analysisTypeBuffer = textEncoder.encode(analysisType);
-	const dataIndicesBuffer = new Uint8Array(dataIndices.length * 4);
+	// dataIndices are 64-bit timestamps
+	const dataIndicesBuffer = new ArrayBuffer(dataIndices.length * 8);
+	const view = new DataView(dataIndicesBuffer);
 	for (var i = 0; i < dataIndices.length; i++) {
-		const int32 = dataIndices[i];
+		const int64 = dataIndices[i];
 		// load the buffer in little endian order
-		dataIndicesBuffer[4 * i] = int32 & 0xff;
-		dataIndicesBuffer[4 * i + 1] = (int32 >> 8) & 0xff;
-		dataIndicesBuffer[4 * i + 2] = (int32 >> 16) & 0xff;
-		dataIndicesBuffer[4 * i + 3] = (int32 >> 24) & 0xff;
+		view.setBigUint64(8 * i, BigInt(int64), true);
 	}
 	const algorithmBuffer = textEncoder.encode(algorithm);
 	const contextBuffer = append([
