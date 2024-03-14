@@ -50,7 +50,9 @@ export async function userClientAuthentication(userClientFormData: any, firstAut
 				};
 			});
 
-			toast.error(`${err}`, { description: 'Check the developer console logs' });
+			toast.error(`Error: ${err.toString()}`, {
+				description: 'Check the developer console for more details.'
+			});
 		});
 }
 
