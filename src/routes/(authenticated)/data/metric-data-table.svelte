@@ -9,14 +9,7 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { userClientStore } from '$lib/stores/UserClientStore';
 	import TableCheckbox from './table-checkbox.svelte';
-	import { selectedTimestamps } from './store';
-
-	// Types
-	type MetricEvent = {
-		timestamp: number;
-		metric: string;
-		source: string;
-	};
+	import { selectedMetricEvents, type MetricEvent } from './store';
 
 	// Data
 	const metricEventData: MetricEvent[] = $page.data.metricEventData;
@@ -89,7 +82,7 @@
 		largestSelectedId = Math.max(...selectedIdsArr);
 
 		// Store selected timestamps in shared store
-		$selectedTimestamps = selectedIdsArr.map((id) => metricEventData[id].timestamp);
+		$selectedMetricEvents = selectedIdsArr.map((id) => metricEventData[id]);
 	}
 </script>
 

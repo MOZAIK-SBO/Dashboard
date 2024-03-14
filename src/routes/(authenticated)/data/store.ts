@@ -7,10 +7,17 @@ export type MpcParty = {
 	region: string;
 };
 
-export const selectedTimestamps = writable<number[]>([]);
+export type MetricEvent = {
+	timestamp: number;
+	metric: string;
+	source: string;
+};
+
+export const selectedMetricEvents = writable<MetricEvent[]>([]);
 export const selectedMpcParties = writable<MpcParty[]>([]);
 
 export const analysisTypes = readable([
+	'Heartbeat-Demo-1',
 	'heartbeat-demo-128',
 	'placeholder-1',
 	'placeholder-2',
