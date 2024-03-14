@@ -9,13 +9,19 @@
 		DateFormatter,
 		getLocalTimeZone,
 		type DateValue,
-		CalendarDate
+		CalendarDate,
+		today
 	} from '@internationalized/date';
 	import { Separator } from '$lib/components/ui/separator';
 	import { cn } from '$lib/utils.js';
 	import { CalendarIcon } from 'lucide-svelte';
 	import { Calendar } from '$lib/components/ui/calendar/index.js';
-	import { analysisTypes, selectedMpcParties, selectedTimestamps } from './store';
+	import { analysisTypes, selectedMetricEvents, selectedMpcParties } from './store';
+	import { PUBLIC_MOZAIK_API_ENDPOINT } from '$env/static/public';
+	import { getUserClientToken } from '$lib/util/UserClientAuth';
+	import { createEncryptedKeyShares } from '$lib/util/MpcKeyShares';
+	import { userClientStore } from '$lib/stores/UserClientStore';
+	import { toast } from 'svelte-sonner';
 
 	const df = new DateFormatter('en-US', {
 		dateStyle: 'long'
@@ -29,11 +35,107 @@
 		value: selectedAnalysisType
 	};
 
+	$: selectedTimestamps = $selectedMetricEvents.map((metricEvent) => metricEvent.timestamp);
+
 	$: prepareMpcAnalysisEnabled =
-		$selectedTimestamps.length > 0 &&
+		$selectedMetricEvents.length > 0 &&
 		$selectedMpcParties.length >= 3 &&
 		expiryDate &&
 		selectedAnalysisType;
+
+	function str2ab(str: string) {
+		const buf = new ArrayBuffer(str.length);
+		const bufView = new Uint8Array(buf);
+		for (let i = 0, strLen = str.length; i < strLen; i++) {
+			bufView[i] = str.charCodeAt(i);
+		}
+
+		return buf;
+	}
+
+	function mpcKeyToCryptoKey(mpcKey: string) {
+		return crypto.subtle.importKey(
+			'spki',
+			str2ab(atob(mpcKey)), // mpc_key is the pemContent (which is base64 encoded)
+			{
+				name: 'RSA-OAEP',
+				hash: 'SHA-256'
+			},
+			true,
+			['encrypt']
+		);
+	}
+
+	async function prepareMpcAnalysis() {
+		const metricSet: Set<string> = new Set();
+
+		for (const metricEvent of $selectedMetricEvents) {
+			metricSet.add(metricEvent.metric);
+		}
+
+		if (metricSet.size > 1) {
+			toast.error('Error', {
+				description: 'You can only perform an analysis on the same metric type.'
+			});
+			return;
+		}
+
+		// Generate key shares in hex-string encoding
+		const mpcKeyShares = (
+			await createEncryptedKeyShares(
+				$userClientStore.client_id,
+				new Uint8Array($userClientStore.iot_key),
+				'AES-GCM-128',
+				await mpcKeyToCryptoKey($selectedMpcParties[0].mpc_key),
+				await mpcKeyToCryptoKey($selectedMpcParties[1].mpc_key),
+				await mpcKeyToCryptoKey($selectedMpcParties[2].mpc_key),
+				selectedAnalysisType!,
+				selectedTimestamps
+			)
+		).map((keyShare) =>
+			new Uint8Array(keyShare).reduce((acc, byte) => acc + byte.toString(16).padStart(2, '0'), '')
+		);
+
+		fetch(`${PUBLIC_MOZAIK_API_ENDPOINT}/analysis/mpc/prepare`, {
+			method: 'POST',
+			headers: {
+				authorization: `Bearer ${await getUserClientToken()}`,
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				parties: mpcKeyShares.map((keyShare, i) => ({
+					mpc_id: $selectedMpcParties[i].mpc_id,
+					key_share: keyShare
+				})),
+				exp_hours: expiryDate!.compare(today(getLocalTimeZone())) * 24,
+				user_key: $userClientStore.user_public_key,
+				data: {
+					source: $userClientStore.iot_dataset,
+					result: $userClientStore.result_dataset,
+					metric: $selectedMetricEvents[0].metric,
+					index: selectedTimestamps
+				},
+				analysis_type: selectedAnalysisType!
+			})
+		})
+			.then((res) => {
+				if (res.ok) {
+					return res.json();
+				} else {
+					throw new Error(res.statusText);
+				}
+			})
+			.then((data) => {
+				toast.success('Success', {
+					description: `MPC analysis has been queued with id: ${data.analysis_id}.`
+				});
+			})
+			.catch((err) => {
+				toast.error(`Error: ${err}`, {
+					description: 'An error occurred while queuing the MPC analysis.'
+				});
+			});
+	}
 </script>
 
 <Card.Root class="w-full">
@@ -47,7 +149,7 @@
 			<p class="ms-4 mt-4 text-sm font-bold">Selected Data</p>
 			<ScrollArea class="h-36">
 				<div class="p-4">
-					{#each $selectedTimestamps as timestamp}
+					{#each selectedTimestamps as timestamp}
 						<div class="text-sm">
 							{timestamp}
 						</div>
@@ -63,12 +165,12 @@
 
 		<!-- Selected MPC parties -->
 		<div class="h-48 w-1/2 rounded-md border">
-			<p class="ms-4 mt-4 text-sm font-bold">Selected MPC parties</p>
+			<p class="ms-4 mt-4 text-sm font-bold">Selected MPC Parties</p>
 			<ScrollArea class="h-36">
 				<div class="p-4">
 					{#each $selectedMpcParties as mpcParty}
 						<div class="text-sm">
-							{mpcParty}
+							{mpcParty.mpc_id}
 						</div>
 						<Separator class="my-2" />
 					{:else}
@@ -135,7 +237,7 @@
 	</Card.Content>
 	<Card.Footer class="flex justify-end">
 		{#if prepareMpcAnalysisEnabled}
-			<Button>Queue analysis</Button>
+			<Button on:click={prepareMpcAnalysis}>Queue analysis</Button>
 		{:else}
 			<Tooltip.Root openDelay={0} closeOnEscape={false} closeOnPointerDown={false}>
 				<Tooltip.Trigger>
@@ -144,7 +246,7 @@
 					</div>
 				</Tooltip.Trigger>
 				<Tooltip.Content>
-					Please select at least 3 MPC parties, some data points timestamps, an analysis type and an
+					Please select at least 3 MPC parties, some data point timestamps, an analysis type and an
 					expiry date.
 				</Tooltip.Content>
 			</Tooltip.Root>
