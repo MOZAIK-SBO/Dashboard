@@ -6,7 +6,8 @@
 	import * as Table from '$lib/components/ui/table';
 	import { Button } from '$lib/components/ui/button';
 	import TableCheckbox from './table-checkbox.svelte';
-	import { selectedMpcParties, type MpcParty } from './store';
+	import { selectedMpcParties } from './store';
+	import type { MpcParty } from '$lib/types';
 
 	// Data
 	const mpcParties: MpcParty[] = $page.data.mpcParties;
@@ -50,11 +51,11 @@
 </script>
 
 <div class="w-[90%]">
-	<div class="mb-2">
+	<div class="mb-4">
 		<p class="text-4xl font-bold tracking-tight">MPC Parties</p>
 		<p class="text-lg text-muted-foreground">Registered MPC parties.</p>
 	</div>
-	<div class="rounded-md border w-full">
+	<div class="w-full rounded-md border">
 		<Table.Root {...$tableAttrs}>
 			<Table.Header>
 				{#each $headerRows as headerRow}
@@ -92,7 +93,7 @@
 			</Table.Body>
 		</Table.Root>
 	</div>
-	<div class="flex justify-between items-center pt-4">
+	<div class="flex items-center justify-between pt-3">
 		<p class="text-sm">
 			Showing <span class="font-bold"
 				>{$pageIndex * $pageSize + 1}-{($pageIndex + 1) * $pageSize <= dataLength

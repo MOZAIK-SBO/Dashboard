@@ -19,7 +19,7 @@
 	import { analysisTypes, selectedMetricEvents, selectedMpcParties } from './store';
 	import { PUBLIC_MOZAIK_API_ENDPOINT } from '$env/static/public';
 	import { getUserClientToken } from '$lib/util/UserClientAuth';
-	import { createEncryptedKeyShares } from '$lib/util/MpcKeyShares';
+	import { createEncryptedKeyShares, mpcKeyToCryptoKey } from '$lib/util/MpcKeyShares';
 	import { userClientStore } from '$lib/stores/UserClientStore';
 	import { toast } from 'svelte-sonner';
 
@@ -42,29 +42,6 @@
 		$selectedMpcParties.length >= 3 &&
 		expiryDate &&
 		selectedAnalysisType;
-
-	function str2ab(str: string) {
-		const buf = new ArrayBuffer(str.length);
-		const bufView = new Uint8Array(buf);
-		for (let i = 0, strLen = str.length; i < strLen; i++) {
-			bufView[i] = str.charCodeAt(i);
-		}
-
-		return buf;
-	}
-
-	function mpcKeyToCryptoKey(mpcKey: string) {
-		return crypto.subtle.importKey(
-			'spki',
-			str2ab(atob(mpcKey)), // mpc_key is the pemContent (which is base64 encoded)
-			{
-				name: 'RSA-OAEP',
-				hash: 'SHA-256'
-			},
-			true,
-			['encrypt']
-		);
-	}
 
 	async function prepareMpcAnalysis() {
 		const metricSet: Set<string> = new Set();
@@ -122,7 +99,7 @@
 				if (res.ok) {
 					return res.json();
 				} else {
-					throw new Error(res.statusText);
+					throw res.statusText;
 				}
 			})
 			.then((data) => {
@@ -143,7 +120,7 @@
 		<Card.Title>MPC computation</Card.Title>
 		<Card.Description>Queue a computation using Multi Party Computation.</Card.Description>
 	</Card.Header>
-	<Card.Content class="flex items-center flex-col">
+	<Card.Content class="flex flex-col items-center">
 		<!-- Selected data  -->
 		<div class="h-48 w-1/2 rounded-md border">
 			<p class="ms-4 mt-4 text-sm font-bold">Selected Data</p>
@@ -183,7 +160,7 @@
 		<Separator class="my-4 w-1/2" />
 
 		<!-- Analysis type -->
-		<div class="flex w-1/2 gap-3 items-center">
+		<div class="flex w-1/2 items-center gap-3">
 			<p class="text-sm font-bold">Analysis type:</p>
 			<Select.Root
 				selected={selectedAnalysis}
@@ -205,14 +182,14 @@
 		<Separator class="my-4 w-1/2" />
 
 		<!-- Expiry date -->
-		<div class="flex w-1/2 gap-3 items-center">
+		<div class="flex w-1/2 items-center gap-3">
 			<p class="text-sm font-bold">Expiry date:</p>
 			<Popover.Root>
 				<Popover.Trigger asChild let:builder>
 					<Button
 						variant="outline"
 						class={cn(
-							'justify-start text-left font-normal flex-1',
+							'flex-1 justify-start text-left font-normal',
 							!expiryDate && 'text-muted-foreground'
 						)}
 						builders={[builder]}

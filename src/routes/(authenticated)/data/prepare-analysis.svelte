@@ -5,7 +5,7 @@
 </script>
 
 <div class="w-[90%]">
-	<div class="mb-2">
+	<div class="mb-4">
 		<p class="text-4xl font-bold tracking-tight">Prepare Analysis</p>
 		<p class="text-lg text-muted-foreground">Queue a computation.</p>
 	</div>

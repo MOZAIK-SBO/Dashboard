@@ -21,7 +21,13 @@ export const load: PageLoad = async ({ fetch }) => {
 			limit: 25000
 		})
 	})
-		.then((res) => res.json())
+		.then((res) => {
+			if (res.ok) {
+				return res.json();
+			} else {
+				throw res.statusText;
+			}
+		})
 		.then((metricEventData) => {
 			return metricEventData.items;
 		})
@@ -39,7 +45,13 @@ export const load: PageLoad = async ({ fetch }) => {
 			authorization: `Bearer ${await getUserClientToken()}`
 		}
 	})
-		.then((res) => res.json())
+		.then((res) => {
+			if (res.ok) {
+				return res.json();
+			} else {
+				throw res.statusText;
+			}
+		})
 		.then((mpcParties) => {
 			return mpcParties;
 		})

@@ -60,6 +60,52 @@ async function createUserIdAndPubkeyContext(
 
 /**
  *
+ * @param {string} str
+ * @returns {ArrayBuffer}
+ */
+function str2ab(str) {
+	const buf = new ArrayBuffer(str.length);
+	const bufView = new Uint8Array(buf);
+	for (let i = 0, strLen = str.length; i < strLen; i++) {
+		bufView[i] = str.charCodeAt(i);
+	}
+
+	return buf;
+}
+
+/**
+ *
+ * @param {string} mpcKey the pemContent of the public key
+ * @returns {Promise<CryptoKey>}
+ */
+export function mpcKeyToCryptoKey(mpcKey) {
+	return crypto.importKey(
+		'spki',
+		str2ab(atob(mpcKey)),
+		{
+			name: 'RSA-OAEP',
+			hash: 'SHA-256'
+		},
+		true,
+		['encrypt']
+	);
+}
+
+/**
+ *
+ * @param {string} s hex encoded byte string
+ * @returns {Uint8Array}
+ */
+export function hexToBuffer(s) {
+	const ct = new Uint8Array(s.length / 2);
+	for (var i = 0; i < ct.byteLength; i++) {
+		ct[i] = parseInt(s.substring(2 * i, 2 * i + 2), 16);
+	}
+	return ct;
+}
+
+/**
+ *
  * @param {string} userId
  * @param {Uint8Array} iotDeviceKey
  * @param {string} algorithm

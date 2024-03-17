@@ -9,7 +9,14 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { userClientStore } from '$lib/stores/UserClientStore';
 	import TableCheckbox from './table-checkbox.svelte';
-	import { selectedMetricEvents, type MetricEvent } from './store';
+	import { selectedMetricEvents } from './store';
+	import { DateFormatter } from '@internationalized/date';
+	import type { MetricEvent } from '$lib/types';
+
+	const df = new DateFormatter('en-US', {
+		dateStyle: 'medium',
+		timeStyle: 'medium'
+	});
 
 	// Data
 	const metricEventData: MetricEvent[] = $page.data.metricEventData;
@@ -32,8 +39,7 @@
 			accessor: 'timestamp',
 			header: 'Timestamp',
 			cell: ({ value }) => {
-				const date = new Date(value);
-				return date.toUTCString();
+				return df.format(new Date(value));
 			}
 		}),
 		table.column({
@@ -87,13 +93,13 @@
 </script>
 
 <div class="w-[90%]">
-	<div class="mb-2">
+	<div class="mb-4">
 		<p class="text-4xl font-bold tracking-tight">Encrypted Data</p>
 		<p class="text-lg text-muted-foreground">
 			Available in the <span class="font-bold">{$userClientStore.iot_dataset}</span> dataset.
 		</p>
 	</div>
-	<div class="rounded-md border w-full">
+	<div class="w-full rounded-md border">
 		<Table.Root {...$tableAttrs}>
 			<Table.Header>
 				{#each $headerRows as headerRow}
@@ -147,7 +153,7 @@
 			</Table.Body>
 		</Table.Root>
 	</div>
-	<div class="flex justify-between items-center pt-4">
+	<div class="flex items-center justify-between pt-3">
 		<p class="text-sm">
 			Showing <span class="font-bold"
 				>{$pageIndex * $pageSize + 1}-{($pageIndex + 1) * $pageSize <= dataLength

@@ -13,7 +13,7 @@ export async function userClientAuthentication(userClientFormData: any, firstAut
 		body: 'grant_type=client_credentials'
 	})
 		.then(async (res) => {
-			if (res.status === 200) {
+			if (res.ok) {
 				const resJson = await res.json();
 
 				userClientStore.set({

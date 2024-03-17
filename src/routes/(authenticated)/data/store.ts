@@ -1,17 +1,5 @@
+import type { MetricEvent, MpcParty } from '$lib/types';
 import { readable, writable } from 'svelte/store';
-
-export type MpcParty = {
-	mpc_id: string;
-	host: string;
-	mpc_key: string;
-	region: string;
-};
-
-export type MetricEvent = {
-	timestamp: number;
-	metric: string;
-	source: string;
-};
 
 export const selectedMetricEvents = writable<MetricEvent[]>([]);
 export const selectedMpcParties = writable<MpcParty[]>([]);
