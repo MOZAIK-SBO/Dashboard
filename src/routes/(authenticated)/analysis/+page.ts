@@ -45,6 +45,7 @@ export const load: PageLoad = async ({ fetch }) => {
 					throw res.statusText;
 				}
 			})
+			.then((res) => res.statuses)
 			.catch((err) => {
 				toast.error(`Error: ${err.toString()}`, {
 					description: 'Check the developer console for more details.'
@@ -60,7 +61,7 @@ export const load: PageLoad = async ({ fetch }) => {
 		// Always show the least advanced status
 		if (analysisStatusesSet.has('failed')) {
 			analysis.status = 'Failed';
-		} else if (analysisStatusesSet.has('queued')) {
+		} else if (analysisStatusesSet.has('queuing')) {
 			analysis.status = 'Queued';
 		} else if (analysisStatusesSet.has('running')) {
 			analysis.status = 'Running';

@@ -21,8 +21,7 @@
 		<DropdownMenu.Item on:click={() => navigator.clipboard.writeText(analysis.analysis_id)}
 			>Copy analysis ID</DropdownMenu.Item
 		>
-		<!-- TODO: remove `true` -->
-		{#if true || analysis.status === 'Completed'}
+		{#if analysis.status === 'Completed'}
 			<DropdownMenu.Item on:click={() => (openDialog = true)}
 				>Reconstruct analysis result</DropdownMenu.Item
 			>
