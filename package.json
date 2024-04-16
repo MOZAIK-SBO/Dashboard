@@ -1,6 +1,6 @@
 {
 	"name": "dashboard",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"private": true,
 	"scripts": {
 		"dev": "vite dev",
@@ -38,8 +38,7 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"@auth/core": "^0.28.0",
-		"@auth/sveltekit": "^0.14.0",
+		"@auth/sveltekit": "^0.15.0",
 		"@internationalized/date": "^3.5.2",
 		"bits-ui": "^0.19.7",
 		"clsx": "^2.1.0",

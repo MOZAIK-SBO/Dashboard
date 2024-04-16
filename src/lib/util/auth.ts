@@ -1,5 +1,4 @@
 import { base } from '$app/paths';
-import { KEYCLOAK_CLIENT_ID, KEYCLOAK_CLIENT_SECRET, KEYCLOAK_ISSUER } from '$env/static/private';
 import Keycloak from '@auth/core/providers/keycloak';
 import { SvelteKitAuth } from '@auth/sveltekit';
 import { redirect, type Handle } from '@sveltejs/kit';
@@ -20,15 +19,10 @@ export const {
 	signIn,
 	signOut
 } = SvelteKitAuth({
-	providers: [
-		Keycloak({
-			clientId: KEYCLOAK_CLIENT_ID,
-			clientSecret: KEYCLOAK_CLIENT_SECRET,
-			issuer: KEYCLOAK_ISSUER
-		})
-	],
+	providers: [Keycloak],
 	theme: {
 		colorScheme: 'light'
 	},
-	trustHost: true
+	trustHost: true,
+	useSecureCookies: true // Needed in production because the default does not understand that the app is running behind a TLS terminated reverse proxy
 });
