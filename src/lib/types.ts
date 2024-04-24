@@ -24,6 +24,5 @@ export type Analysis = {
 	analysis_type: string;
 	created_at: number;
 	keys_exp_at: number;
-	statuses: { mpc_id: string; status: string }[];
-	status: string;
+	latest_status: string;
 };

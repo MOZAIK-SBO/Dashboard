@@ -24,7 +24,7 @@
 		timestamp: number;
 		metric: string;
 		source: string;
-		value: { empty: boolean; map: { c_result: string; is_combined: boolean } };
+		value: { empty: boolean; map: { c_result: string; is_combined: boolean; analysis_id: string } };
 	};
 
 	type AnalysisResultsQuery = {
@@ -70,6 +70,7 @@
 		}
 	}
 
+	// TODO: calculate the confidence levels: the reconstructed string is 80 characters long, thus 40 bytes. These 40 bytes are 5 64-bit little endian integers with 8 bit fixed-point precision. Every confidence level is thus the 8 byte integer divided by 2^8 and converted to base10 decimal.
 	let reconstructedAnalysisResults: string[] = [];
 
 	async function reconstructAnalysisResults() {
@@ -122,7 +123,7 @@
 				</div>
 				<div class="grid grid-cols-5 items-center">
 					<p class="text-sm font-bold">Status</p>
-					<p class="col-span-4 text-sm">{analysis.status}</p>
+					<p class="col-span-4 text-sm">{analysis.latest_status}</p>
 				</div>
 				<div class="grid grid-cols-5 items-center">
 					<p class="text-sm font-bold">Metric</p>

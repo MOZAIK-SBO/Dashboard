@@ -49,7 +49,7 @@
 			header: 'Metric'
 		}),
 		table.column({
-			accessor: 'status',
+			accessor: 'latest_status',
 			header: 'Status'
 		}),
 		table.column({
