@@ -70,26 +70,58 @@
 		}
 	}
 
-	// TODO: calculate the confidence levels: the reconstructed string is 80 characters long, thus 40 bytes. These 40 bytes are 5 64-bit little endian integers with 8 bit fixed-point precision. Every confidence level is thus the 8 byte integer divided by 2^8 and converted to base10 decimal.
-	let reconstructedAnalysisResults: string[] = [];
+	type ReconstructedAnalysisResult = {
+		raw: string;
+		decoded_confidence_levels: string[];
+	};
+
+	let reconstructedAnalysisResults: ReconstructedAnalysisResult[] = [];
 
 	async function reconstructAnalysisResults() {
 		try {
 			for (const result of analysisResult.items) {
-				reconstructedAnalysisResults.push(
-					new Uint8Array(
-						await reconstructResult(
-							analysis.user_id,
-							new Uint8Array($userClientStore.iot_key),
-							await mpcKeyToCryptoKey(involvedMpcParties[0].mpc_key),
-							await mpcKeyToCryptoKey(involvedMpcParties[1].mpc_key),
-							await mpcKeyToCryptoKey(involvedMpcParties[2].mpc_key),
-							analysis.analysis_id,
-							analysis.analysis_type,
-							hexToBuffer(result.value.map.c_result)
-						)
-					).reduce((acc, byte) => acc + byte.toString(16).padStart(2, '0'), '')
-				);
+				const raw_result = new Uint8Array(
+					await reconstructResult(
+						analysis.user_id,
+						new Uint8Array($userClientStore.iot_key),
+						await mpcKeyToCryptoKey(involvedMpcParties[0].mpc_key),
+						await mpcKeyToCryptoKey(involvedMpcParties[1].mpc_key),
+						await mpcKeyToCryptoKey(involvedMpcParties[2].mpc_key),
+						analysis.analysis_id,
+						analysis.analysis_type,
+						hexToBuffer(result.value.map.c_result)
+					)
+				).reduce((acc, byte) => acc + byte.toString(16).padStart(2, '0'), '');
+
+				const reconstructedResult: ReconstructedAnalysisResult = {
+					raw: raw_result,
+					decoded_confidence_levels: []
+				};
+
+				// Every 16 characters in the raw result hex-string is an 8 byte number in little endian format, with 8-bit fixed-point precision.
+				if (raw_result.length % 16 === 0) {
+					// Split the raw hex-string result into 16 character chunks (every chunk represents an 8 byte little endian number)
+					const raw_hex_strings: string[] = raw_result.match(/.{1,16}/g) || [];
+
+					for (const raw_hex_string of raw_hex_strings) {
+						// convert little endian hex to integer
+						const raw_hex_string_bytes: string[] = raw_hex_string.match(/.{1,2}/g) || [];
+
+						const buffer = new ArrayBuffer(8);
+						const dataView = new DataView(buffer);
+
+						for (const [i, hex_part] of raw_hex_string_bytes.entries()) {
+							dataView.setUint8(i, parseInt(hex_part, 16));
+						}
+
+						const raw_number = Number(dataView.getBigUint64(0, true));
+
+						// convert 8-bit precision integer to decimal
+						reconstructedResult.decoded_confidence_levels.push((raw_number / 256).toFixed(4));
+					}
+				}
+
+				reconstructedAnalysisResults.push(reconstructedResult);
 				reconstructedAnalysisResults = reconstructedAnalysisResults; //https://learn.svelte.dev/tutorial/updating-arrays-and-objects
 			}
 		} catch (e: any) {
@@ -163,7 +195,13 @@
 					{#each reconstructedAnalysisResults as result, i}
 						<div class="grid grid-cols-5 items-center">
 							<p class="text-sm font-bold">Result {i + 1}</p>
-							<p class="col-span-4 text-sm">{result}</p>
+							<p class="col-span-4 text-sm">{result.raw}</p>
+							{#if result.decoded_confidence_levels.length >= i + 1}
+								<p class="text-sm font-bold">Confidence levels {i + 1}</p>
+								<p class="col-span-4 text-sm">
+									{result.decoded_confidence_levels.toString().replaceAll(',', ', ')}
+								</p>
+							{/if}
 						</div>
 					{/each}
 				{/if}
