@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { PUBLIC_MOZAIK_API_ENDPOINT } from '$env/static/public';
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
+	import { ScrollArea } from '$lib/components/ui/scroll-area/index.js';
 	import { getUserClientToken } from '$lib/util/UserClientAuth';
 	import { toast } from 'svelte-sonner';
 	import { DateFormatter } from '@internationalized/date';
@@ -32,13 +33,13 @@
 		cursor: string;
 	};
 
-	let analysisResult: AnalysisResultsQuery;
+	let analysisResultsQuery: AnalysisResultsQuery;
 	let involvedMpcParties: MpcParty[] = $page.data.mpcParties.filter((party: MpcParty) =>
 		analysis.parties.includes(party.mpc_id)
 	);
 
 	async function fetchAnalysisResult() {
-		analysisResult = await fetch(
+		analysisResultsQuery = await fetch(
 			`${PUBLIC_MOZAIK_API_ENDPOINT}/analysis/result/${analysis.analysis_id}`,
 			{
 				method: 'GET',
@@ -75,12 +76,15 @@
 		decoded_confidence_levels: string[];
 	};
 
-	let reconstructedAnalysisResults: ReconstructedAnalysisResult[] = [];
+	// Map MPC party ID to array of results by that party
+	let reconstructedAnalysisResults: Map<string, ReconstructedAnalysisResult[]> = new Map();
 
 	async function reconstructAnalysisResults() {
 		try {
-			for (const result of analysisResult.items) {
-				const raw_result = new Uint8Array(
+			// Loop over MPC responses
+			for (const result of analysisResultsQuery.items) {
+				// Decrypt the full MPC response (can contain multiple computation results)
+				const raw_result_decrypted = new Uint8Array(
 					await reconstructResult(
 						analysis.user_id,
 						new Uint8Array($userClientStore.iot_key),
@@ -93,37 +97,56 @@
 					)
 				).reduce((acc, byte) => acc + byte.toString(16).padStart(2, '0'), '');
 
-				const reconstructedResult: ReconstructedAnalysisResult = {
-					raw: raw_result,
-					decoded_confidence_levels: []
-				};
+				// Loop over computation results of this MPC party
+				for (let computation = 0; computation < analysis.data_index.length; computation++) {
+					// Slice the raw result hex-string for this computation
+					const raw_result_slice = raw_result_decrypted.slice(
+						computation * 80,
+						(computation + 1) * 80
+					);
 
-				// Every 16 characters in the raw result hex-string is an 8 byte number in little endian format, with 8-bit fixed-point precision.
-				if (raw_result.length % 16 === 0) {
-					// Split the raw hex-string result into 16 character chunks (every chunk represents an 8 byte little endian number)
-					const raw_hex_strings: string[] = raw_result.match(/.{1,16}/g) || [];
+					const reconstructedResult: ReconstructedAnalysisResult = {
+						raw: raw_result_slice,
+						decoded_confidence_levels: []
+					};
 
-					for (const raw_hex_string of raw_hex_strings) {
-						// convert little endian hex to integer
-						const raw_hex_string_bytes: string[] = raw_hex_string.match(/.{1,2}/g) || [];
+					// Every 16 characters in the raw result hex-string is an 8 byte number in little endian format, with 8-bit fixed-point precision.
+					if (raw_result_slice.length % 16 === 0) {
+						// Split the raw hex-string result into 16 character chunks (every chunk represents an 8 byte little endian number)
+						const raw_hex_strings: string[] = raw_result_slice.match(/.{1,16}/g) || [];
 
-						const buffer = new ArrayBuffer(8);
-						const dataView = new DataView(buffer);
+						for (const raw_hex_string of raw_hex_strings) {
+							// Get hex-byte parts
+							const raw_hex_string_bytes: string[] = raw_hex_string.match(/.{1,2}/g) || [];
 
-						for (const [i, hex_part] of raw_hex_string_bytes.entries()) {
-							dataView.setUint8(i, parseInt(hex_part, 16));
+							// Convert little endian hex to integer
+							const buffer = new ArrayBuffer(8);
+							const dataView = new DataView(buffer);
+
+							for (const [i, hex_part] of raw_hex_string_bytes.entries()) {
+								dataView.setUint8(i, parseInt(hex_part, 16));
+							}
+
+							const raw_number = Number(dataView.getBigUint64(0, true));
+
+							// convert 8-bit precision integer to decimal
+							reconstructedResult.decoded_confidence_levels.push((raw_number / 256).toFixed(4));
 						}
-
-						const raw_number = Number(dataView.getBigUint64(0, true));
-
-						// convert 8-bit precision integer to decimal
-						reconstructedResult.decoded_confidence_levels.push((raw_number / 256).toFixed(4));
 					}
-				}
 
-				reconstructedAnalysisResults.push(reconstructedResult);
-				reconstructedAnalysisResults = reconstructedAnalysisResults; //https://learn.svelte.dev/tutorial/updating-arrays-and-objects
+					if (!reconstructedAnalysisResults.has(result.source)) {
+						reconstructedAnalysisResults.set(result.source, []);
+					}
+
+					reconstructedAnalysisResults.get(result.source)?.push(reconstructedResult);
+				}
 			}
+
+			reconstructedAnalysisResults = new Map(
+				[...reconstructedAnalysisResults].sort((a, b) => a[0].localeCompare(b[0]))
+			);
+
+			console.log(reconstructedAnalysisResults);
 		} catch (e: any) {
 			toast.error(`Error: ${e}`, {
 				description:
@@ -136,8 +159,8 @@
 
 <Dialog.Root bind:open={openDialog}>
 	<Dialog.Trigger />
-	{#if analysisResult}
-		<Dialog.Content class="md:max-w-xl lg:max-w-4xl">
+	{#if analysisResultsQuery}
+		<Dialog.Content class="md:max-w-xl lg:max-w-5xl">
 			<Dialog.Header>
 				<Dialog.Title>Analysis result</Dialog.Title>
 				<Dialog.Description>Reconstruct the analysis result(s).</Dialog.Description>
@@ -172,7 +195,7 @@
 				<div class="grid grid-cols-5 items-center">
 					<p class="text-sm font-bold">Results are</p>
 					<p class="col-span-4 text-sm">
-						{analysisResult.items[0].value.map.is_combined ? 'Combined' : 'Shares'}
+						{analysisResultsQuery.items[0].value.map.is_combined ? 'Combined' : 'Shares'}
 					</p>
 				</div>
 				<div class="grid grid-cols-5 items-center">
@@ -180,8 +203,8 @@
 					<p class="col-span-4 text-sm">{analysis.data_index.length}</p>
 				</div>
 				<div class="grid grid-cols-5 items-center">
-					<p class="text-sm font-bold">Results</p>
-					<p class="col-span-4 text-sm">{analysisResult.items.length}</p>
+					<p class="text-sm font-bold">MPC Responses</p>
+					<p class="col-span-4 text-sm">{analysisResultsQuery.items.length}</p>
 				</div>
 			</div>
 			<Separator />
@@ -191,19 +214,28 @@
 						Reconstruct analysis result(s)
 					</Button>
 				</div>
-				{#if reconstructedAnalysisResults.length === analysisResult.items.length}
-					{#each reconstructedAnalysisResults as result, i}
-						<div class="grid grid-cols-5 items-center">
-							<p class="text-sm font-bold">Result {i + 1}</p>
-							<p class="col-span-4 text-sm">{result.raw}</p>
-							{#if result.decoded_confidence_levels.length >= i + 1}
-								<p class="text-sm font-bold">Confidence levels {i + 1}</p>
-								<p class="col-span-4 text-sm">
-									{result.decoded_confidence_levels.toString().replaceAll(',', ', ')}
-								</p>
-							{/if}
-						</div>
-					{/each}
+				{#if reconstructedAnalysisResults.size === analysisResultsQuery.items.length}
+					<ScrollArea class="max-h-96">
+						{#each reconstructedAnalysisResults as [party, computations], i}
+							<div class={i != reconstructedAnalysisResults.size - 1 ? 'mb-4' : ''}>
+								<p class="text-sm">Results from party <b>{party}</b></p>
+
+								{#each computations as computation, j}
+									<div class="grid grid-cols-5 items-center">
+										<p class="row-span-2 ms-5 text-sm font-bold">Result {j + 1}</p>
+										<p class="col-span-4 text-sm"><code>{computation.raw}</code></p>
+										<p class="col-span-4 col-start-2 text-sm">
+											<code
+												>[{computation.decoded_confidence_levels
+													.toString()
+													.replaceAll(',', ', ')}]</code
+											>
+										</p>
+									</div>
+								{/each}
+							</div>
+						{/each}
+					</ScrollArea>
 				{/if}
 			</div>
 		</Dialog.Content>
