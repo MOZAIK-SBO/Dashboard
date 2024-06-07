@@ -19,7 +19,7 @@
 	import { analysisTypes, selectedMetricEvents, selectedMpcParties } from './store';
 	import { PUBLIC_MOZAIK_API_ENDPOINT } from '$env/static/public';
 	import { getUserClientToken } from '$lib/util/UserClientAuth';
-	import { createEncryptedKeyShares, mpcKeyToCryptoKey } from '$lib/util/MpcKeyShares';
+	import { createEncryptedKeyShares, mpcKeyToCryptoKey } from '$lib/util/cosicLibMozaik';
 	import { userClientStore } from '$lib/stores/UserClientStore';
 	import { toast } from 'svelte-sonner';
 
@@ -118,7 +118,11 @@
 <Card.Root class="w-full">
 	<Card.Header>
 		<Card.Title>MPC computation</Card.Title>
-		<Card.Description>Queue a computation using Multi Party Computation.</Card.Description>
+		<Card.Description
+			>Queue a computation using Multi Party Computation. <small
+				><b>Make sure to provide the correct datasets in the client settings.</b></small
+			></Card.Description
+		>
 	</Card.Header>
 	<Card.Content class="flex flex-col items-center">
 		<!-- Selected data  -->

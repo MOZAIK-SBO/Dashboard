@@ -22,9 +22,7 @@
 			>Copy analysis ID</DropdownMenu.Item
 		>
 		{#if analysis.latest_status === 'Completed'}
-			<DropdownMenu.Item on:click={() => (openDialog = true)}
-				>Reconstruct analysis result</DropdownMenu.Item
-			>
+			<DropdownMenu.Item on:click={() => (openDialog = true)}>Analysis result</DropdownMenu.Item>
 		{/if}
 	</DropdownMenu.Content>
 </DropdownMenu.Root>
