@@ -26,3 +26,17 @@ export type Analysis = {
 	keys_exp_at: number;
 	latest_status: string;
 };
+
+export type BatchInfo = {
+	batch_id: string;
+	batch_size: number;
+	analysis_data_point_count: number;
+	analysis_ids: string[];
+	user_ids: string[];
+	analysis_type: string;
+	online_only: boolean;
+	parties: string[];
+	created_at: number;
+	first_keys_exp_at: number;
+	latest_status: string;
+};

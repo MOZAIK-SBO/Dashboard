@@ -5,7 +5,7 @@
 	import { readable } from 'svelte/store';
 	import * as Table from '$lib/components/ui/table';
 	import { Button } from '$lib/components/ui/button';
-	import TableCheckbox from './table-checkbox.svelte';
+	import TableCheckbox from '$lib/components/ui/table-checkbox.svelte';
 	import { selectedMpcParties } from './store';
 	import type { MpcParty } from '$lib/types';
 

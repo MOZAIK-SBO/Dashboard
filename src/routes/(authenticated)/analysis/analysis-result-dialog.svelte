@@ -232,14 +232,14 @@
 					<p class="col-span-4 text-sm">{analysis.analysis_id}</p>
 				</div>
 				<div class="grid grid-cols-5 items-center">
+					<p class="text-sm font-bold">Status</p>
+					<p class="col-span-4 text-sm">{analysis.latest_status}</p>
+				</div>
+				<div class="grid grid-cols-5 items-center">
 					<p class="text-sm font-bold">Created at</p>
 					<p class="col-span-4 text-sm">
 						{df.format(new Date(analysis.created_at))}
 					</p>
-				</div>
-				<div class="grid grid-cols-5 items-center">
-					<p class="text-sm font-bold">Status</p>
-					<p class="col-span-4 text-sm">{analysis.latest_status}</p>
 				</div>
 				<div class="grid grid-cols-5 items-center">
 					<p class="text-sm font-bold">Metric</p>
@@ -254,13 +254,7 @@
 					<p class="col-span-4 text-sm">{analysis.parties.join(', ')}</p>
 				</div>
 				<div class="grid grid-cols-5 items-center">
-					<p class="text-sm font-bold">Results are</p>
-					<p class="col-span-4 text-sm">
-						{analysisResultsQuery.items[0].value.map.is_combined ? 'Combined' : 'Shares'}
-					</p>
-				</div>
-				<div class="grid grid-cols-5 items-center">
-					<p class="text-sm font-bold">Computations</p>
+					<p class="text-sm font-bold">Computed data points</p>
 					<p class="col-span-4 text-sm">{analysis.data_index.length}</p>
 				</div>
 				<div class="grid grid-cols-5 items-center">

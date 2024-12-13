@@ -8,7 +8,7 @@
 	import { ArrowUpDown } from 'lucide-svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { userClientStore } from '$lib/stores/UserClientStore';
-	import TableCheckbox from './table-checkbox.svelte';
+	import TableCheckbox from '$lib/components/ui/table-checkbox.svelte';
 	import { selectedMetricEvents } from './store';
 	import { DateFormatter } from '@internationalized/date';
 	import type { MetricEvent } from '$lib/types';

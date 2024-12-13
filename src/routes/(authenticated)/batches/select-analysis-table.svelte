@@ -1,14 +1,25 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { Render, Subscribe, createRender, createTable } from 'svelte-headless-table';
-	import { addPagination, addSortBy } from 'svelte-headless-table/plugins';
+	import {
+		addPagination,
+		addSelectedRows,
+		addSortBy,
+		addTableFilter
+	} from 'svelte-headless-table/plugins';
 	import { readable } from 'svelte/store';
 	import * as Table from '$lib/components/ui/table';
 	import { Button } from '$lib/components/ui/button';
 	import { ArrowUpDown } from 'lucide-svelte';
-	import AnalysesTableActions from './analyses-table-actions.svelte';
 	import { DateFormatter } from '@internationalized/date';
 	import type { Analysis } from '$lib/types';
+	import TableCheckbox from '$lib/components/ui/table-checkbox.svelte';
+	import {
+		dataPointsPerAnalysis,
+		selectedAnalyses,
+		selectedBatchSize,
+		totalSelectedDataPoints
+	} from './store';
 
 	const df = new DateFormatter('en-US', {
 		dateStyle: 'medium',
@@ -16,16 +27,32 @@
 	});
 
 	// Data
-	const analyses: Analysis[] = $page.data.analyses;
-	const dataLength = analyses.length;
+	let analyses: Analysis[] = $page.data.analyses;
+
+	$: {
+		analyses = $page.data.analyses.filter(
+			(analysis: Analysis) =>
+				analysis.latest_status === 'Prepared' &&
+				analysis.data_index.length === $dataPointsPerAnalysis
+		);
+	}
+
+	$: dataLength = analyses.length;
 
 	// Table
-	const table = createTable(readable(analyses), {
+	$: table = createTable(readable(analyses), {
 		page: addPagination(),
-		sort: addSortBy()
+		sort: addSortBy(),
+		select: addSelectedRows(),
+		filter: addTableFilter()
 	});
 
-	const columns = table.createColumns([
+	$: columns = table.createColumns([
+		table.column({
+			accessor: 'analysis_id',
+			id: 'select-analysis_id',
+			header: ''
+		}),
 		table.column({
 			accessor: 'created_at',
 			header: 'Created',
@@ -58,28 +85,24 @@
 		table.column({
 			accessor: 'latest_status',
 			header: 'Status'
-		}),
-		table.column({
-			accessor: (value) => value,
-			header: '',
-			cell: ({ value }) => {
-				return createRender(AnalysesTableActions, {
-					analysis: value
-				});
-			}
 		})
 	]);
 
-	const { headerRows, pageRows, tableAttrs, tableBodyAttrs, pluginStates } =
-		table.createViewModel(columns);
-	const { hasNextPage, hasPreviousPage, pageIndex, pageSize } = pluginStates.page;
+	// Reactivity
+	$: ({ headerRows, pageRows, tableAttrs, tableBodyAttrs, pluginStates } =
+		table.createViewModel(columns));
+	$: ({ hasNextPage, hasPreviousPage, pageIndex, pageSize } = pluginStates.page);
+	$: ({ selectedDataIds, getRowState } = pluginStates.select);
+
+	$: $selectedAnalyses = Object.keys($selectedDataIds).map((key) => {
+		return analyses[+key];
+	});
+
+	$: selectEnabled = $totalSelectedDataPoints < $selectedBatchSize;
 </script>
 
-<div class="w-[90%]">
-	<div class="mb-4">
-		<p class="text-4xl font-bold tracking-tight">Analyses</p>
-		<p class="text-lg text-muted-foreground">All requested computations.</p>
-	</div>
+<div class="w-full">
+	<p>Selected data points: <code>{$totalSelectedDataPoints}</code></p>
 	<div class="w-full rounded-md border">
 		<Table.Root {...$tableAttrs}>
 			<Table.Header>
@@ -111,7 +134,14 @@
 							{#each row.cells as cell (cell.id)}
 								<Subscribe attrs={cell.attrs()} let:attrs>
 									<Table.Cell {...attrs}>
-										<Render of={cell.render()} />
+										{#if cell.id === 'select-analysis_id'}
+											<TableCheckbox
+												checked={getRowState(row).isSelected}
+												enabled={selectEnabled}
+											/>
+										{:else}
+											<Render of={cell.render()} />
+										{/if}
 									</Table.Cell>
 								</Subscribe>
 							{/each}

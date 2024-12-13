@@ -6,9 +6,9 @@
 	import * as Table from '$lib/components/ui/table';
 	import { Button } from '$lib/components/ui/button';
 	import { ArrowUpDown } from 'lucide-svelte';
-	import AnalysesTableActions from './analyses-table-actions.svelte';
+	import BatchesTableActions from './batches-table-actions.svelte';
 	import { DateFormatter } from '@internationalized/date';
-	import type { Analysis } from '$lib/types';
+	import type { BatchInfo } from '$lib/types';
 
 	const df = new DateFormatter('en-US', {
 		dateStyle: 'medium',
@@ -16,16 +16,16 @@
 	});
 
 	// Data
-	const analyses: Analysis[] = $page.data.analyses;
-	const dataLength = analyses.length;
+	$: batches = $page.data.batches as BatchInfo[];
+	$: dataLength = batches.length;
 
 	// Table
-	const table = createTable(readable(analyses), {
+	$: table = createTable(readable(batches), {
 		page: addPagination(),
 		sort: addSortBy()
 	});
 
-	const columns = table.createColumns([
+	$: columns = table.createColumns([
 		table.column({
 			accessor: 'created_at',
 			header: 'Created',
@@ -34,8 +34,8 @@
 			}
 		}),
 		table.column({
-			accessor: 'keys_exp_at',
-			header: 'Key Expiration',
+			accessor: 'first_keys_exp_at',
+			header: 'Earliest Key Expiration',
 			cell: ({ value }) => {
 				return df.format(new Date(value));
 			}
@@ -45,12 +45,12 @@
 			header: 'Type'
 		}),
 		table.column({
-			accessor: 'metric',
-			header: 'Metric'
+			accessor: 'batch_size',
+			header: 'Batch Size'
 		}),
 		table.column({
-			accessor: 'data_index',
-			header: 'Data points',
+			accessor: 'analysis_ids',
+			header: 'Analyses',
 			cell: ({ value }) => {
 				return value.length;
 			}
@@ -63,23 +63,19 @@
 			accessor: (value) => value,
 			header: '',
 			cell: ({ value }) => {
-				return createRender(AnalysesTableActions, {
-					analysis: value
+				return createRender(BatchesTableActions, {
+					batch: value
 				});
 			}
 		})
 	]);
 
-	const { headerRows, pageRows, tableAttrs, tableBodyAttrs, pluginStates } =
-		table.createViewModel(columns);
-	const { hasNextPage, hasPreviousPage, pageIndex, pageSize } = pluginStates.page;
+	$: ({ headerRows, pageRows, tableAttrs, tableBodyAttrs, pluginStates } =
+		table.createViewModel(columns));
+	$: ({ hasNextPage, hasPreviousPage, pageIndex, pageSize } = pluginStates.page);
 </script>
 
-<div class="w-[90%]">
-	<div class="mb-4">
-		<p class="text-4xl font-bold tracking-tight">Analyses</p>
-		<p class="text-lg text-muted-foreground">All requested computations.</p>
-	</div>
+<div class="w-full">
 	<div class="w-full rounded-md border">
 		<Table.Root {...$tableAttrs}>
 			<Table.Header>

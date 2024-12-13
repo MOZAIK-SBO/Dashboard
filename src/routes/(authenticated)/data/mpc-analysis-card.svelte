@@ -104,12 +104,12 @@
 			})
 			.then((data) => {
 				toast.success('Success', {
-					description: `MPC analysis has been queued with id: ${data.analysis_id}.`
+					description: `MPC analysis has been prepared with id: ${data.analysis_id}.`
 				});
 			})
 			.catch((err) => {
 				toast.error(`Error: ${err}`, {
-					description: 'An error occurred while queuing the MPC analysis.'
+					description: 'An error occurred while preparing the MPC analysis.'
 				});
 			});
 	}
@@ -119,7 +119,7 @@
 	<Card.Header>
 		<Card.Title>MPC computation</Card.Title>
 		<Card.Description
-			>Queue a computation using Multi Party Computation. <small
+			>Prepare a computation using Multi Party Computation. <small
 				><b>Make sure to provide the correct datasets in the client settings.</b></small
 			></Card.Description
 		>
@@ -218,12 +218,12 @@
 	</Card.Content>
 	<Card.Footer class="flex justify-end">
 		{#if prepareMpcAnalysisEnabled}
-			<Button on:click={prepareMpcAnalysis}>Queue analysis</Button>
+			<Button on:click={prepareMpcAnalysis}>Prepare analysis</Button>
 		{:else}
 			<Tooltip.Root openDelay={0} closeOnEscape={false} closeOnPointerDown={false}>
 				<Tooltip.Trigger>
 					<div class="cursor-not-allowed">
-						<Button disabled>Queue analysis</Button>
+						<Button disabled>Prepare analysis</Button>
 					</div>
 				</Tooltip.Trigger>
 				<Tooltip.Content>

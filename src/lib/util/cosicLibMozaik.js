@@ -1,4 +1,5 @@
 import Module from './fhe/openfhe_pke_es6.js';
+import { Aes as SJCLAes } from './aes.js';
 
 var crypto = window.crypto.subtle;
 
@@ -58,6 +59,33 @@ async function createUserIdAndPubkeyContext(
 		pk2Buf: party2PubkeyBuffer,
 		pk3Buf: party3PubkeyBuffer
 	};
+}
+
+/**
+ * Outputs the key schedule of AES-128 as Uint8Array.
+ * @param {Uint8Array} key: Uint8Array of length 16
+ */
+function computeAes128KeySchedule(key) {
+	console.assert(key.length == 16);
+	// convert into correct format: SJCL expects 4 32-bit words
+	const aesKey = [0, 0, 0, 0];
+	for (var i = 0; i < 4; i++) {
+		aesKey[i] =
+			(key[4 * i] << 24) + (key[4 * i + 1] << 16) + (key[4 * i + 2] << 8) + key[4 * i + 3];
+	}
+	const aesCipher = new SJCLAes(aesKey);
+	const keyscheduleList = aesCipher._key[0]; // _key[0] is the forward keyschedule
+	// keyscheduleList is a list of 44 32-bit words
+	const ks = new Uint8Array(44 * 4);
+	// write keyschedule in big-endian byte order
+	for (var i = 0; i < 44; i++) {
+		const word = keyscheduleList[i];
+		ks[4 * i] = (word >> 24) & 0xff;
+		ks[4 * i + 1] = (word >> 16) & 0xff;
+		ks[4 * i + 2] = (word >> 8) & 0xff;
+		ks[4 * i + 3] = word & 0xff;
+	}
+	return ks;
 }
 
 /**
@@ -141,6 +169,7 @@ export async function createEncryptedKeyShares(
 	// dataIndices are 64-bit timestamps
 	const dataIndicesBuffer = new ArrayBuffer(dataIndices.length * 8);
 	const view = new DataView(dataIndicesBuffer);
+	// console.log(dataIndices);
 	for (var i = 0; i < dataIndices.length; i++) {
 		const int64 = dataIndices[i];
 		// load the buffer in little endian order
@@ -158,13 +187,14 @@ export async function createEncryptedKeyShares(
 		if (iotDeviceKey.byteLength != 16) {
 			throw 'Expected key size of 128bit';
 		}
-		var share1 = new Uint8Array(16);
-		var share2 = new Uint8Array(16);
+		const ks = computeAes128KeySchedule(iotDeviceKey);
+		var share1 = new Uint8Array(176);
+		var share2 = new Uint8Array(176);
 		window.crypto.getRandomValues(share1);
 		window.crypto.getRandomValues(share2);
-		var share3 = new Uint8Array(16);
-		for (var i = 0; i < 16; i++) {
-			share3[i] = iotDeviceKey[i] ^ share1[i] ^ share2[i];
+		var share3 = new Uint8Array(176);
+		for (var i = 0; i < 176; i++) {
+			share3[i] = ks[i] ^ share1[i] ^ share2[i];
 		}
 		var c1 = await pkEnc(share1, party1Pubkey, userIdAndPubkeyBuffer['pk1Buf'], contextBuffer);
 		var c2 = await pkEnc(share2, party2Pubkey, userIdAndPubkeyBuffer['pk2Buf'], contextBuffer);

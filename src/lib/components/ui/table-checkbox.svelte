@@ -6,4 +6,4 @@
 	export let enabled: boolean;
 </script>
 
-<Checkbox bind:checked={$checked} disabled={!enabled} />
+<Checkbox bind:checked={$checked} disabled={!$checked && !enabled} />
