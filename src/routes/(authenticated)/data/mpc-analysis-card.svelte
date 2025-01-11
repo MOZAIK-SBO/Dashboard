@@ -19,7 +19,7 @@
 	import { analysisTypes, selectedMetricEvents, selectedMpcParties } from './store';
 	import { PUBLIC_MOZAIK_API_ENDPOINT } from '$env/static/public';
 	import { getUserClientToken } from '$lib/util/UserClientAuth';
-	import { createEncryptedKeyShares, mpcKeyToCryptoKey } from '$lib/util/cosicLibMozaik';
+	import { createAnalysisRequestData, mpcKeyToCryptoKey } from '$lib/util/cosicLibMozaik';
 	import { userClientStore } from '$lib/stores/UserClientStore';
 	import { toast } from 'svelte-sonner';
 
@@ -59,7 +59,7 @@
 
 		// Generate key shares in hex-string encoding
 		const mpcKeyShares = (
-			await createEncryptedKeyShares(
+			await createAnalysisRequestData(
 				$userClientStore.client_id,
 				new Uint8Array($userClientStore.iot_key),
 				'AES-GCM-128',

@@ -13,6 +13,7 @@
 		<NavLink linkName="Data" href="{base}/data" disabled={!userClientAvailable} />
 		<NavLink linkName="Analysis" href="{base}/analysis" disabled={!userClientAvailable} />
 		<NavLink linkName="Batches" href="{base}/batches" disabled={!userClientAvailable} />
+		<NavLink linkName="Streaming" href="{base}/streaming" disabled={!userClientAvailable} />
 	</div>
 	<div class="flex items-center space-x-4">
 		<a

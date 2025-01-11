@@ -40,3 +40,15 @@ export type BatchInfo = {
 	first_keys_exp_at: number;
 	latest_status: string;
 };
+
+export type StreamingInfo = {
+	is_streaming: boolean;
+	analysis_type?: string;
+	batch_size?: number;
+	keys_exp_at?: number;
+	start_time?: number;
+	source?: string;
+	result?: string;
+	submitted_batches?: string[];
+	current_analysis_ids?: string[];
+};

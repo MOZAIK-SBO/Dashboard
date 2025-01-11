@@ -136,6 +136,7 @@ export function hexToBuffer(s) {
 
 /**
  *
+ * @param {number} stateSeparation
  * @param {string} userId
  * @param {Uint8Array} iotDeviceKey
  * @param {string} algorithm
@@ -146,7 +147,8 @@ export function hexToBuffer(s) {
  * @param {number[]} dataIndices array of timestamps in millisecond precision
  * @returns {Promise<ArrayBuffer[]>}
  */
-export async function createEncryptedKeyShares(
+async function createAnalysisRequestDataHelper(
+	stateSeparation,
 	userId,
 	iotDeviceKey,
 	algorithm,
@@ -176,7 +178,10 @@ export async function createEncryptedKeyShares(
 		view.setBigUint64(8 * i, BigInt(int64), true);
 	}
 	const algorithmBuffer = textEncoder.encode(algorithm);
+	const sepBuffer = new Uint8Array(1);
+	sepBuffer[0] = stateSeparation;
 	const contextBuffer = append([
+		sepBuffer,
 		userIdAndPubkeyBuffer['contextBuf'],
 		dataIndicesBuffer,
 		analysisTypeBuffer,
@@ -203,6 +208,78 @@ export async function createEncryptedKeyShares(
 	} else {
 		throw 'Unsupported algorithm';
 	}
+}
+
+/**
+ *
+ * @param {string} userId
+ * @param {Uint8Array} iotDeviceKey
+ * @param {string} algorithm
+ * @param {CryptoKey} party1Pubkey
+ * @param {CryptoKey} party2Pubkey
+ * @param {CryptoKey} party3Pubkey
+ * @param {string} analysisType
+ * @param {number[]} dataIndices array of timestamps in millisecond precision
+ * @returns {Promise<ArrayBuffer[]>}
+ */
+export async function createAnalysisRequestData(
+	userId,
+	iotDeviceKey,
+	algorithm,
+	party1Pubkey,
+	party2Pubkey,
+	party3Pubkey,
+	analysisType,
+	dataIndices
+) {
+	return createAnalysisRequestDataHelper(
+		0x1,
+		userId,
+		iotDeviceKey,
+		algorithm,
+		party1Pubkey,
+		party2Pubkey,
+		party3Pubkey,
+		analysisType,
+		dataIndices
+	);
+}
+
+/**
+ *
+ * @param {string} userId
+ * @param {Uint8Array} iotDeviceKey
+ * @param {string} algorithm
+ * @param {CryptoKey} party1Pubkey
+ * @param {CryptoKey} party2Pubkey
+ * @param {CryptoKey} party3Pubkey
+ * @param {string} analysisType
+ * @param {number} streamingBegin millisecond timestamp of stream start
+ * @param {number} streamingEnd millisecond timestamp of stream expiration/end
+ * @returns {Promise<ArrayBuffer[]>}
+ */
+export async function createAnalysisRequestDataForStreaming(
+	userId,
+	iotDeviceKey,
+	algorithm,
+	party1Pubkey,
+	party2Pubkey,
+	party3Pubkey,
+	analysisType,
+	streamingBegin,
+	streamingEnd
+) {
+	return createAnalysisRequestDataHelper(
+		0x2,
+		userId,
+		iotDeviceKey,
+		algorithm,
+		party1Pubkey,
+		party2Pubkey,
+		party3Pubkey,
+		analysisType,
+		[streamingBegin, streamingEnd]
+	);
 }
 
 /**

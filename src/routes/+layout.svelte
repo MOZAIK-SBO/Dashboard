@@ -7,7 +7,7 @@
 </script>
 
 <ModeWatcher />
-<Toaster richColors duration={10000} />
+<Toaster richColors duration={3000} />
 
 <svelte:head>
 	<title>MOZAIK - Dashboard</title>
