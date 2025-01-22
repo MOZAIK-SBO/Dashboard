@@ -25,6 +25,7 @@ export type Analysis = {
 	created_at: number;
 	keys_exp_at: number;
 	latest_status: string;
+	invoker: string;
 };
 
 export type BatchInfo = {
@@ -39,6 +40,7 @@ export type BatchInfo = {
 	created_at: number;
 	first_keys_exp_at: number;
 	latest_status: string;
+	invoker: string;
 };
 
 export type StreamingInfo = {

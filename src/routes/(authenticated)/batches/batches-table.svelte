@@ -45,6 +45,13 @@
 			header: 'Type'
 		}),
 		table.column({
+			accessor: 'invoker',
+			header: 'Manual/Streaming',
+			cell: ({ value }) => {
+				return value.charAt(0).toUpperCase() + value.slice(1);
+			}
+		}),
+		table.column({
 			accessor: 'batch_size',
 			header: 'Batch Size'
 		}),
