@@ -18,7 +18,7 @@ export const load: PageLoad = async ({ fetch }) => {
 			dataRange: {
 				datasets: [get(userClientStore).iot_dataset]
 			},
-			limit: 25000
+			limit: 250000
 		})
 	})
 		.then((res) => {
